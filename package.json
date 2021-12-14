@@ -1,0 +1,37 @@
+{
+  "name": "taskmaster-bot",
+  "version": "1.0.0",
+  "description": "",
+  "main": "main.js",
+  "scripts": {
+    "start": "cd src && node ./main.js",
+    "update": "make update",
+    "clean": "make clean",
+    "cleanLogs": "make cleanLogs"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jwMaxwell/Taskmaster-bot.git"
+  },
+  "author": "Joshua Maxwell, Brandon Ingli",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/jwMaxwell/Taskmaster-bot/issues"
+  },
+  "homepage": "https://github.com/jwMaxwell/Taskmaster-bot#readme",
+  "dependencies": {
+    "@discordjs/builders": "^0.9.0",
+    "@discordjs/rest": "^0.1.0-canary.0",
+    "@typicalninja21/discord-winston": "^1.0.1",
+    "discord-api-types": "^0.25.2",
+    "discord.js": "^13.3.1",
+    "dotenv": "^10.0.0",
+    "piston-client": "^1.0.2",
+    "winston": "^3.3.3",
+    "winston-daily-rotate-file": "^4.5.5"
+  },
+  "prettier": {},
+  "engines": {
+    "node": ">=16.6.0"
+  }
+}
