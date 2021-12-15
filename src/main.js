@@ -126,16 +126,13 @@ bot.on("messageCreate", async (message) => {
     message = await message.fetch();
   }
 
-  if (message.channel.type === "DM" && message.author.id != bot.user.id) {
-    //TODO
-    utils.reply("Hello!", message);
-    return;
-  }
-
   // if it is a command
   if (message.content.charAt(0) === PREFIX) {
-    //TODO
-    utils.reply("Hello!", message);
+    const command = message.content.split(/\s/)[0].toLowerCase().slice(1);
+    const args = message.content
+      .substring(message.content.split(/\s/)[0].length)
+      .slice(1);
+    tasks.processCommand(command, args, bot, message, PREFIX);
     return;
   }
 });

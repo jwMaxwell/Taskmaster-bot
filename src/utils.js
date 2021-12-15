@@ -53,8 +53,7 @@ async function send(content, channel, bot, mention = false) {
     }
     messageData.content = `${mentionString}${messageData.content ?? ""}`;
   }
-
-  const channelObj = bot.channels.cache.get(channel);
+  const channelObj = await bot.channels.fetch(channel);
   // prettier-ignore
   this.logger.log(
     "debug",
@@ -107,7 +106,7 @@ async function reply(content, message, mention = false) {
  * @param {boolean} [monotype=false] True if the content should be monospace (```yaml).
  * @param {string} [footer=null] Footer text of the embed.
  * @param {string} [footerImageURL=null] Fully qualified URL to image to include in footer.
- * @param {SpikeKit.COLORS} [color=COLORS.GREEN] Color for the embed. If not defined in enum, embed will be green.
+ * @param {Utils.COLORS} [color=COLORS.GREEN] Color for the embed. If not defined in enum, embed will be green.
  * @returns {Discord.MessageEmbed} Embed to send on via another function.
  */
 function createEmbed(
