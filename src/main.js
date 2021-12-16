@@ -157,7 +157,7 @@ bot.on("messageReactionAdd", async (reaction, user) => {
     `${user.username} just reacted to ${reaction.message.url}`
   );
 
-  if (reaction.message.author.id == bot.user.id) {
+  if (reaction.message.author.id == bot.user.id && user.id != bot.user.id) {
     tasks.processReaction(reaction, user, true, bot);
     return;
   }
