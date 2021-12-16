@@ -152,6 +152,17 @@ async function newTask(args, message, bot) {
       message
     );
 
+    utils.reply(
+      utils.createEmbed(
+        `${task.title}`,
+        `Task ID: \`${taskId}\`\n---\n${task.description}`,
+        false,
+        message.author.username,
+        message.author.avatarURL()
+      ),
+      message
+    );
+
     utils.logger.log("debug", `Task ${taskId} successfully set up!`);
   } catch (e) {
     utils.logger.error(`Something went wrong creating a new task: ${e.stack}`);
@@ -204,6 +215,8 @@ async function onBotStart(bot) {
       }
     }
   }
+
+  utils.logger.info(`Tasks is ready.`);
 }
 
 /**
@@ -228,9 +241,140 @@ function processCommand(command, args, bot, message, prefix) {
   }
 }
 
+/**
+ * Handles reactions added/removed
+ * @param {Discord.MessageReaction} reaction Message Reaction object for the reaction added/removed.
+ * @param {Discord.User} user User who applied reaction/User whose reaction was removed.
+ * @param {boolean} add True if reaction added, False if removed.
+ * @param {Discord.Client} bot The instantiated Discord Bot object.
+ */
+async function processReaction(reaction, user, add, bot) {
+  // We're not dealing with removals
+  if (!add) return;
+
+  // And we're only looking for the right emoji
+  if (reaction.emoji.name !== EMOJI) {
+    reaction.users.remove(user.id);
+    return;
+  }
+
+  // Make sure this message is a task
+  const matchingMessages = Object.keys(tasks).filter(
+    (key) => tasks[key].messageId == reaction.message.id
+  );
+  if (matchingMessages.length == 1) {
+    const task = tasks[matchingMessages[0]];
+    const taskId = matchingMessages[0];
+    utils.logger.log("debug", `Message ${reaction.message.url} is a task!`);
+
+    // Make sure this person isn't the taskmaster
+    if (user.id == task.taskmaster) {
+      utils.logger.info(
+        `${user.username} is the taskmaster for ${taskId}, but requested the task. Sending it as a courtesy.`
+      );
+      await utils.send(
+        `You're the taskmaster for the following task. I'm sending it to you as a courtesy.`,
+        user,
+        bot
+      );
+      utils.send(
+        utils.createEmbed(
+          `${task.title}`,
+          `Task ID: \`${taskId}\`\n---\n${task.description}`,
+          false,
+          user.username,
+          user.avatarURL()
+        ),
+        user,
+        bot
+      );
+      reaction.users.remove(user.id);
+      return;
+    }
+
+    // Now check if this person has started the task already or not
+    const matchingSubmissions = Object.keys(task.submissions).filter(
+      (sub) => sub == user.id
+    );
+    if (matchingSubmissions.length == 0) {
+      // New Person for this Task!
+      utils.logger.log(
+        "debug",
+        `User ${user.username} is requesting ${taskId} for the first time`
+      );
+      try {
+        const taskmaster = await bot.users.fetch(task.taskmaster);
+        // const dmChannel = await bot.channels.fetch(user.dmChannel);
+        utils.logger.log("debug", `${user.dmChannel}`);
+        utils.send(
+          utils.createEmbed(
+            `${task.title}`,
+            `Task ID: \`${taskId}\`\n---\n${task.description}`,
+            false,
+            taskmaster.username,
+            taskmaster.avatarURL()
+          ),
+          user,
+          bot
+        );
+
+        const now = Date.now();
+
+        const submission = {
+          start: now,
+        };
+
+        tasks[taskId].submissions[user.id] = submission;
+        writeFile();
+
+        utils.logger.log(
+          "debug",
+          `Task ${taskId} sent to ${user.username} at ${now}.`
+        );
+      } catch (e) {
+        utils.logger.error(
+          `Error processing task ${taskId} distribution for ${user.username}: ${e.stack}`
+        );
+      }
+    } else if (matchingSubmissions.length == 1) {
+      utils.logger.log(
+        "debug",
+        `User ${user.username} is requesting ${taskId} for a subsequent time.`
+      );
+
+      const submission = tasks[taskId].submissions[matchingSubmissions[0]];
+      utils.send(
+        utils.createEmbed(
+          `You've started this already!`,
+          `You started task \`${taskId}\` on ${new Date(
+            submission.start
+          ).toUTCString()}. Finish it!`,
+          false,
+          user.username,
+          user.avatarURL(),
+          utils.COLORS.RED
+        ),
+        user,
+        bot
+      );
+    } else {
+      utils.logger.error(
+        `Got ${matchingSubmissions.length} submission for task ${taskId} and user ${user.id}`
+      );
+    }
+  } else if (matchingMessages.length == 0) {
+    utils.logger.log("debug", `Message ${reaction.message.url} is not a task.`);
+  } else {
+    utils.logger.error(
+      `Found multiple tasks for message ${reaction.message.url}`
+    );
+  }
+}
+
 module.exports = {
   getFile,
   writeFile,
   onBotStart,
   processCommand,
+  processReaction,
 };

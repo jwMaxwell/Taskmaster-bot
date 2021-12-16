@@ -19,7 +19,7 @@ const HOUR = 60 * MINUTE;
 /**
  * Send a message to a channel of your choice.
  * @param {Discord.MessageEmbed|String} content The content to include in the message.
- * @param {int} channel The channel ID to send this message to.
+ * @param {int | Discord.User} channel The channel ID to send this message to.
  * @param {Discord.Client} bot Instantiated Discord Client.
  * @param {Discord.User[]} [mention=null] An array of users to mention. Will add to the beginning of the content (even for embeds)
  * @throws "Invalid bot" if the bot is not properly provided.
@@ -35,8 +35,13 @@ async function send(content, channel, bot, mention = false) {
   if (!(bot instanceof Discord.Client)) {
     throw "Invalid bot";
   }
-  if (!/\d+/.test(channel)) {
+  let channelObj;
+  if (channel instanceof Discord.User) {
+    channelObj = channel;
+  } else if (!/\d+/.test(channel)) {
     throw "Not a Channel ID";
+  } else {
+    channelObj = await bot.channels.fetch(channel);
   }
 
   let messageData = {};
@@ -53,7 +58,7 @@ async function send(content, channel, bot, mention = false) {
     }
     messageData.content = `${mentionString}${messageData.content ?? ""}`;
   }
-  const channelObj = await bot.channels.fetch(channel);
+
   // prettier-ignore
   this.logger.log(
     "debug",

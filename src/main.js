@@ -152,7 +152,15 @@ bot.on("messageReactionAdd", async (reaction, user) => {
     }
   }
 
-  //TODO
+  utils.logger.log(
+    "debug",
+    `${user.username} just reacted to ${reaction.message.url}`
+  );
+
+  if (reaction.message.author.id == bot.user.id) {
+    tasks.processReaction(reaction, user, true, bot);
+    return;
+  }
 });
 
 bot.on("messageReactionRemove", async (reaction, user) => {
@@ -170,7 +178,10 @@ bot.on("messageReactionRemove", async (reaction, user) => {
     }
   }
 
-  //TODO
+  utils.logger.log(
+    "debug",
+    `${user.username} just un-reacted to ${reaction.message.url}`
+  );
 });
 
 // brings the bot online
