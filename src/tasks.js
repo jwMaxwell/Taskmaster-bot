@@ -62,7 +62,9 @@ function writeFile() {
 function help(prefix, message) {
   const helptext =
     `\`${prefix}newtask [title] ; [description]\` - (DM Only) Create a new task.\n` +
-    `\`${prefix}listtasks\` - List available tasks with links to respective messages.`;
+    `\`${prefix}listtasks\` - List available tasks with links to respective messages.` +
+    `\`${prefix}submit [id] [submission]\` - (DM Only) Submit to the given task.\n` +
+    `\`${prefix}listsubs [id]\` - (DM Only) If you're taskmaster, list submissions for the given task.`;
   utils.reply(
     utils.createEmbed(
       `TaskMaster Help`,
@@ -195,6 +197,230 @@ async function listTasks(message, bot) {
 }
 
 /**
+ * Submit to a task.
+ * @param {string} args Args from the message
+ * @param {Discord.Message} message Message sent
+ * @param {Discord.Client} bot Bot object
+ * @returns null
+ */
+async function submitTask(args, message, bot) {
+  let id, submissionText;
+  try {
+    let rest;
+    [id, ...rest] = args.trim().split(" ");
+    submissionText = rest.join(" ");
+  } catch (e) {
+    utils.logger.info(`User ${message.author.username} sent a bad submission.`);
+    utils.reply(
+      utils.createEmbed(
+        `Bad Submission`,
+        `That didn't quite work. Check your syntax and try again.`,
+        false,
+        message.author.username,
+        message.author.avatarURL(),
+        utils.COLORS.RED
+      ),
+      message
+    );
+    return;
+  }
+
+  // Now check that the task ID sent is good
+  if (!Object.keys(tasks).includes(id)) {
+    utils.logger.info(
+      `User ${message.author.username} sent a bad task ID: ${id}`
+    );
+    utils.reply(
+      utils.createEmbed(
+        `Bad Submission`,
+        `That task ID doesn't exist. Check your syntax and try again.`,
+        false,
+        message.author.username,
+        message.author.avatarURL(),
+        utils.COLORS.RED
+      ),
+      message
+    );
+    return;
+  }
+
+  // Check if they're the taskmaster
+  if (message.author.id == tasks[id].taskmaster) {
+    utils.logger.info(
+      `User ${message.author.username} tried to submit for their own task ${id}`
+    );
+    utils.reply(
+      utils.createEmbed(
+        `Bad Submission`,
+        `This is your task! You can't submit to it.`,
+        false,
+        message.author.username,
+        message.author.avatarURL(),
+        utils.COLORS.RED
+      ),
+      message
+    );
+    return;
+  }
+
+  // Now make sure that they started the task
+  if (!Object.keys(tasks[id].submissions).includes(message.author.id)) {
+    utils.logger.info(
+      `User ${message.author.username} tried to submit for task ${id} but they haven't gotten it yet.`
+    );
+    utils.reply(
+      utils.createEmbed(
+        `Bad Submission`,
+        `You haven't gotten that task yet! Go react to it to start!`,
+        false,
+        message.author.username,
+        message.author.avatarURL(),
+        utils.COLORS.RED
+      ),
+      message
+    );
+    return;
+  }
+
+  // Check if they didn't already submit
+  if (tasks[id].submissions[message.author.id].end ?? false) {
+    utils.logger.info(
+      `User ${message.author.username} tried to submit for task ${id} but they already did!`
+    );
+    utils.reply(
+      utils.createEmbed(
+        `Already Submitted`,
+        `You submitted to this task on ${new Date(
+          tasks[id].submissions[message.author.id].end
+        ).toUTCString()}`,
+        false,
+        message.author.username,
+        message.author.avatarURL(),
+        utils.COLORS.RED
+      ),
+      message
+    );
+    return;
+  }
+
+  // Ok, now we can submit the task
+
+  const now = Date.now();
+  tasks[id].submissions[message.author.id].end = now;
+  tasks[id].submissions[message.author.id].submission = submissionText;
+  writeFile();
+
+  utils.logger.log(
+    "debug",
+    `${message.author.username} successfully submitted to task ${id}`
+  );
+  utils.reply(
+    utils.createEmbed(
+      `Submission Successful`,
+      `Your submission for task \`${id}\` was received on ${new Date(
+        now
+      ).toUTCString()}. A copy of the submission text is below.\n---\n${submissionText}`,
+      false,
+      message.author.username,
+      message.author.avatarURL()
+    ),
+    message
+  );
+}
+
+/**
+ * Get the submissions for a task you're taskmaster on.
+ * @param {string} args Args from message
+ * @param {Discord.Message} message Message sent
+ * @param {Discord.Client} bot Bot object
+ * @returns null
+ */
+async function listSubmissions(args, message, bot) {
+  args = args.trim();
+
+  // Make sure the task exists
+  if (!Object.keys(tasks).includes(args)) {
+    utils.logger.info(
+      `User ${message.author.username} tried to list subs from a bad task ID: ${id}`
+    );
+    utils.reply(
+      utils.createEmbed(
+        `Bad Task`,
+        `That task ID doesn't exist. Check your syntax and try again.`,
+        false,
+        message.author.username,
+        message.author.avatarURL(),
+        utils.COLORS.RED
+      ),
+      message
+    );
+    return;
+  }
+
+  // Make sure they're the taskmaster
+  if (tasks[args].taskmaster != message.author.id) {
+    utils.logger.info(
+      `User ${message.author.username} tried to list tasks for ${args} but they're not the taskmaster.`
+    );
+    utils.reply(
+      utils.createEmbed(
+        `Bad Task`,
+        `You're not the taskmaster for that one. Nice try.`,
+        false,
+        message.author.username,
+        message.author.avatarURL(),
+        utils.COLORS.RED
+      ),
+      message
+    );
+    return;
+  }
+
+  // List the submissions
+  const subs = tasks[args].submissions;
+  const finishedSubIds = Object.keys(subs).filter(
+    (sub) => subs[sub].end ?? false
+  );
+  if (finishedSubIds.length == 0) {
+    utils.logger.log("debug", `No submissions for task ${args}.`);
+    utils.reply(
+      utils.createEmbed(
+        `No Submissions`,
+        `There's no submissions for ${args} yet.`,
+        false,
+        message.author.username,
+        message.author.avatarURL()
+      ),
+      message
+    );
+    return;
+  }
+
+  for (const userId of finishedSubIds) {
+    try {
+      const sub = subs[userId];
+      const user = await bot.users.fetch(userId);
+      utils.reply(
+        utils.createEmbed(
+          `Task ${args}`,
+          `Start: ${new Date(sub.start).toUTCString()}\nEnd: ${new Date(
+            sub.end
+          ).toUTCString()}\n---\n${sub.submission}`,
+          false,
+          user.username,
+          user.avatarURL()
+        ),
+        message
+      );
+    } catch (e) {
+      utils.logger.error(
+        `Error processing submission from ${userId} on task ${args}: ${e.stack}`
+      );
+    }
+  }
+}
+
+/**
  * Things to do when the bot starts up.
  * @param {Discord.Client} bot Discord bot object
  */
@@ -237,6 +463,12 @@ function processCommand(command, args, bot, message, prefix) {
     return;
   } else if (command === "listtasks") {
     listTasks(message, bot);
+    return;
+  } else if (command === "submit" && message.channel.type === "DM") {
+    submitTask(args, message, bot);
+    return;
+  } else if (command === "listsubs" && message.channel.type === "DM") {
+    listSubmissions(args, message, bot);
     return;
   }
 }
@@ -345,10 +577,12 @@ async function processReaction(reaction, user, add, bot) {
       const submission = tasks[taskId].submissions[matchingSubmissions[0]];
       utils.send(
         utils.createEmbed(
-          `You've started this already!`,
+          `You've ${submission.end ? "finished" : "started"} this already!`,
           `You started task \`${taskId}\` on ${new Date(
             submission.start
-          ).toUTCString()}. Finish it!`,
+          ).toUTCString()}. ${
+            submission.end ? "You've submitted it already, too." : "Finish it!"
+          }`,
           false,
           user.username,
           user.avatarURL(),
