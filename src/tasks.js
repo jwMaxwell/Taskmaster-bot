@@ -326,6 +326,20 @@ async function submitTask(args, message, bot) {
     ),
     message
   );
+  const taskmaster = await bot.users.fetch(tasks[id].taskmaster);
+  utils.send(
+    utils.createEmbed(
+      `New Submission for Task ${args}`,
+      `Start: ${new Date(sub.start).toUTCString()}\nEnd: ${new Date(
+        sub.end
+      ).toUTCString()}\n---\n${sub.submission}`,
+      false,
+      message.author.username,
+      message.author.avatarURL()
+    ),
+    taskmaster,
+    bot
+  );
 }
 
 /**
