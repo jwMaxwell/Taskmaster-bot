@@ -670,7 +670,7 @@ async function processReaction(reaction, user, add, bot) {
     // Make sure this is active
     if (!task.active) {
       utils.logger.info(
-        `User ${user.username} tried to request inactive task ${id}`
+        `User ${user.username} tried to request inactive task ${taskId}`
       );
       utils.send(
         utils.createEmbed(
