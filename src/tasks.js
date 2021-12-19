@@ -65,7 +65,7 @@ function help(prefix, message) {
     `\`${prefix}newtask [description]\` - (DM Only) Create a new task.\n` +
     `\`${prefix}listtasks\` - List available tasks with links to respective messages.` +
     `\`${prefix}submit [id] [submission]\` - (DM Only) Submit to the given task.\n` +
-    `\`${prefix}listsubs [id]\` - (DM Only) If you're taskmaster, list submissions for the given task.` +
+    `\`${prefix}listsubs [id]\` - (DM Only) If you're taskmaster, list submissions for the given task.\n` +
     `\`${prefix}endtask [id]\` - (DM Only) If you're taskmaster, end the given task.`;
   utils.reply(
     utils.createEmbed(
