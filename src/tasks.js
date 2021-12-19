@@ -290,9 +290,9 @@ async function submitTask(args, message, bot) {
     utils.reply(
       utils.createEmbed(
         `Already Submitted`,
-        `You submitted to this task on ${new Date(
-          tasks[id].submissions[message.author.id].end
-        ).toUTCString()}`,
+        `You submitted to this task on ${new Date(0)
+          .setUTCMilliseconds(tasks[id].submissions[message.author.id].end)
+          .toUTCString()}`,
         false,
         message.author.username,
         message.author.avatarURL(),
@@ -317,9 +317,9 @@ async function submitTask(args, message, bot) {
   utils.reply(
     utils.createEmbed(
       `Submission Successful`,
-      `Your submission for task \`${id}\` was received on ${new Date(
-        now
-      ).toUTCString()}. A copy of the submission text is below.\n---\n${submissionText}`,
+      `Your submission for task \`${id}\` was received on ${new Date()
+        .setUTCMilliseconds(now)
+        .toUTCString()}. A copy of the submission text is below.\n---\n${submissionText}`,
       false,
       message.author.username,
       message.author.avatarURL()
@@ -327,12 +327,15 @@ async function submitTask(args, message, bot) {
     message
   );
   const taskmaster = await bot.users.fetch(tasks[id].taskmaster);
+  const sub = tasks[id].submissions[message.author.id];
   utils.send(
     utils.createEmbed(
-      `New Submission for Task ${args}`,
-      `Start: ${new Date(tasks[id].start).toUTCString()}\nEnd: ${new Date(
-        tasks[id].end
-      ).toUTCString()}\n---\n${tasks[id].submission}`,
+      `New Submission for Task ${id}`,
+      `Start: ${new Date(0)
+        .setUTCMilliseconds(sub.start)
+        .toUTCString()}\nEnd: ${new Date(0)
+        .setUTCMilliseconds(sub.end)
+        .toUTCString()}\n---\n${sub.submission}`,
       false,
       message.author.username,
       message.author.avatarURL()
@@ -417,9 +420,9 @@ async function listSubmissions(args, message, bot) {
       utils.reply(
         utils.createEmbed(
           `Task ${args}`,
-          `Start: ${new Date(sub.start).toUTCString()}\nEnd: ${new Date(
-            sub.end
-          ).toUTCString()}\n---\n${sub.submission}`,
+          `Start: ${new Date(sub.start).toUTCString()}\nEnd: ${new Date(0)
+            .setUTCMilliseconds(sub.end)
+            .toUTCString()}\n---\n${sub.submission}`,
           false,
           user.username,
           user.avatarURL()
@@ -592,9 +595,9 @@ async function processReaction(reaction, user, add, bot) {
       utils.send(
         utils.createEmbed(
           `You've ${submission.end ? "finished" : "started"} this already!`,
-          `You started task \`${taskId}\` on ${new Date(
-            submission.start
-          ).toUTCString()}. ${
+          `You started task \`${taskId}\` on ${new Date(0)
+            .setUTCMilliseconds(submission.start)
+            .toUTCString()}. ${
             submission.end ? "You've submitted it already, too." : "Finish it!"
           }`,
           false,
