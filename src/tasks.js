@@ -63,7 +63,7 @@ function writeFile() {
 function help(prefix, message) {
   const helptext =
     `\`${prefix}newtask [description]\` - (DM Only) Create a new task.\n` +
-    `\`${prefix}listtasks\` - List available tasks with links to respective messages.` +
+    `\`${prefix}listtasks\` - List available tasks with links to respective messages.\n` +
     `\`${prefix}submit [id] [submission]\` - (DM Only) Submit to the given task.\n` +
     `\`${prefix}listsubs [id]\` - (DM Only) If you're taskmaster, list submissions for the given task.\n` +
     `\`${prefix}endtask [id]\` - (DM Only) If you're taskmaster, end the given task.`;
