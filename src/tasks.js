@@ -463,7 +463,7 @@ async function endTask(args, message, bot) {
   // Make sure the task exists
   if (!Object.keys(tasks).includes(args)) {
     utils.logger.info(
-      `User ${message.author.username} tried to end a bad task ID: ${id}`
+      `User ${message.author.username} tried to end a bad task ID: ${args}`
     );
     utils.reply(
       utils.createEmbed(
@@ -501,7 +501,7 @@ async function endTask(args, message, bot) {
   // Make sure it isn't already ended
   if (tasks[args].active) {
     utils.logger.info(
-      `User ${message.author.username} tried to end inactive task ${id}`
+      `User ${message.author.username} tried to end inactive task ${args}`
     );
     utils.reply(
       utils.createEmbed(
