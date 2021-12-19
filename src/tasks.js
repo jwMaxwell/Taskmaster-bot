@@ -330,9 +330,9 @@ async function submitTask(args, message, bot) {
   utils.send(
     utils.createEmbed(
       `New Submission for Task ${args}`,
-      `Start: ${new Date(sub.start).toUTCString()}\nEnd: ${new Date(
-        sub.end
-      ).toUTCString()}\n---\n${sub.submission}`,
+      `Start: ${new Date(tasks[id].start).toUTCString()}\nEnd: ${new Date(
+        tasks[id].end
+      ).toUTCString()}\n---\n${tasks[id].submission}`,
       false,
       message.author.username,
       message.author.avatarURL()
