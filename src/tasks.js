@@ -315,7 +315,7 @@ async function submitTask(args, message, bot) {
     `${message.author.username} successfully submitted to task ${id}`
   );
   let date = new Date(0);
-  date = date.setUTCMilliseconds(now);
+  date.setUTCMilliseconds(now);
   utils.reply(
     utils.createEmbed(
       `Submission Successful`,
