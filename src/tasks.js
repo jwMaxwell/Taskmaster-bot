@@ -670,18 +670,18 @@ async function processReaction(reaction, user, add, bot) {
     // Make sure this is active
     if (!task.active) {
       utils.logger.info(
-        `User ${message.author.username} tried to request inactive task ${id}`
+        `User ${user.username} tried to request inactive task ${id}`
       );
-      utils.reply(
+      utils.send(
         utils.createEmbed(
           `Task ${id} has ended.`,
           `Pick another one.`,
           false,
-          message.author.username,
-          message.author.avatarURL(),
+          user.username,
+          user.avatarURL(),
           utils.COLORS.RED
         ),
-        message
+        user
       );
       return;
     }
