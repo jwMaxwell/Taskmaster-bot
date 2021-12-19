@@ -681,7 +681,8 @@ async function processReaction(reaction, user, add, bot) {
           user.avatarURL(),
           utils.COLORS.RED
         ),
-        user
+        user,
+        bot
       );
       return;
     }
