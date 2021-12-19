@@ -4,6 +4,7 @@ const fs = require("fs");
 const FILENAME = "../data/tasks.json";
 const EMOJI = "📫";
 const TASKS_CHANNEL_ID = "920138517391224922"; // #spam
+const SUBMISSIONS_CHANNEL_ID = "920138517391224922"; // #spam
 let tasks;
 
 /*
@@ -11,6 +12,7 @@ tasks.json format
 
 {
   <timestamp as ID>: {
+    active: bool
     channelId: <ID>
     messageId: <ID>
     description: <string>
@@ -63,7 +65,8 @@ function help(prefix, message) {
     `\`${prefix}newtask [description]\` - (DM Only) Create a new task.\n` +
     `\`${prefix}listtasks\` - List available tasks with links to respective messages.` +
     `\`${prefix}submit [id] [submission]\` - (DM Only) Submit to the given task.\n` +
-    `\`${prefix}listsubs [id]\` - (DM Only) If you're taskmaster, list submissions for the given task.`;
+    `\`${prefix}listsubs [id]\` - (DM Only) If you're taskmaster, list submissions for the given task.` +
+    `\`${prefix}endtask [id]\` - (DM Only) If you're taskmaster, end the given task.`;
   utils.reply(
     utils.createEmbed(
       `TaskMaster Help`,
@@ -103,6 +106,7 @@ async function newTask(args, message, bot) {
     }
 
     let task = {
+      active: true,
       channelId: TASKS_CHANNEL_ID,
       description: description,
       taskmaster: message.author.id,
@@ -167,7 +171,9 @@ async function newTask(args, message, bot) {
  */
 async function listTasks(message, bot) {
   let messageText = "";
-  for (const [id, task] of Object.entries(tasks)) {
+  const activeTasks = Object.keys(tasks).filter((id) => tasks[id].active);
+  for (const id of activeTasks) {
+    const task = tasks[id];
     const channel = await bot.channels.fetch(task.channelId);
     const message = await channel.messages.fetch(task.messageId);
     const user = await bot.users.fetch(task.taskmaster);
@@ -223,6 +229,25 @@ async function submitTask(args, message, bot) {
       utils.createEmbed(
         `Bad Submission`,
         `That task ID doesn't exist. Check your syntax and try again.`,
+        false,
+        message.author.username,
+        message.author.avatarURL(),
+        utils.COLORS.RED
+      ),
+      message
+    );
+    return;
+  }
+
+  // Make sure it's active
+  if (!tasks[id].active) {
+    utils.logger.info(
+      `User ${message.author.username} tried to submit to inactive task ${id}`
+    );
+    utils.reply(
+      utils.createEmbed(
+        `Bad Submission`,
+        `That task has ended.`,
         false,
         message.author.username,
         message.author.avatarURL(),
@@ -432,6 +457,104 @@ async function listSubmissions(args, message, bot) {
   }
 }
 
+async function endTask(args, message, bot) {
+  args = args.trim();
+
+  // Make sure the task exists
+  if (!Object.keys(tasks).includes(args)) {
+    utils.logger.info(
+      `User ${message.author.username} tried to end a bad task ID: ${id}`
+    );
+    utils.reply(
+      utils.createEmbed(
+        `Bad Task`,
+        `That task ID doesn't exist. Check your syntax and try again.`,
+        false,
+        message.author.username,
+        message.author.avatarURL(),
+        utils.COLORS.RED
+      ),
+      message
+    );
+    return;
+  }
+
+  // Make sure they're the taskmaster
+  if (tasks[args].taskmaster != message.author.id) {
+    utils.logger.info(
+      `User ${message.author.username} tried end ${args} but they're not the taskmaster.`
+    );
+    utils.reply(
+      utils.createEmbed(
+        `Bad Task`,
+        `You're not the taskmaster for that one. Nice try.`,
+        false,
+        message.author.username,
+        message.author.avatarURL(),
+        utils.COLORS.RED
+      ),
+      message
+    );
+    return;
+  }
+
+  // End the task
+  tasks[args].active = false;
+  writeFile();
+  const channel = await bot.channels.fetch(tasks[args].channelId);
+  const taskMessage = await channel.messages.fetch(tasks[args].messageId);
+  await taskMessage.edit({ content: "This task has ended." });
+
+  // List the submissions
+  const subs = tasks[args].submissions;
+  const finishedSubIds = Object.keys(subs).filter(
+    (sub) => subs[sub].end ?? false
+  );
+  if (finishedSubIds.length == 0) {
+    utils.logger.log("debug", `No submissions for task ${args}.`);
+    utils.send(
+      utils.createEmbed(
+        `No Submissions for Task ${args}`,
+        `There's no submissions for ${args}.`,
+        false,
+        message.author.username,
+        message.author.avatarURL()
+      ),
+      SUBMISSIONS_CHANNEL_ID,
+      bot
+    );
+    return;
+  }
+
+  for (const userId of finishedSubIds) {
+    try {
+      const sub = subs[userId];
+      const user = await bot.users.fetch(userId);
+      let start = new Date(0);
+      start.setUTCMilliseconds(sub.start);
+      let end = new Date(0);
+      end.setUTCMilliseconds(sub.end);
+      utils.send(
+        utils.createEmbed(
+          `Task ${args}`,
+          `Start: ${start.toUTCString()}\nEnd: ${end.toUTCString()}\n---\n${
+            sub.submission
+          }`,
+          false,
+          user.username,
+          user.avatarURL()
+        ),
+        SUBMISSIONS_CHANNEL_ID,
+        bot
+      );
+    } catch (e) {
+      utils.logger.error(
+        `Error processing submission from ${userId} on task ${args}: ${e.stack}`
+      );
+    }
+  }
+}
+
 /**
  * Things to do when the bot starts up.
  * @param {Discord.Client} bot Discord bot object
@@ -481,6 +604,9 @@ function processCommand(command, args, bot, message, prefix) {
     return;
   } else if (command === "listsubs" && message.channel.type === "DM") {
     listSubmissions(args, message, bot);
+    return;
+  } else if (command === "endtask" && message.channel.type === "DM") {
+    endTask(args, message, bot);
     return;
   }
 }
