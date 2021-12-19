@@ -672,6 +672,7 @@ async function processReaction(reaction, user, add, bot) {
       utils.logger.info(
         `User ${user.username} tried to request inactive task ${taskId}`
       );
+      reaction.users.remove(user.id);
       utils.send(
         utils.createEmbed(
           `Task ${taskId} has ended.`,
