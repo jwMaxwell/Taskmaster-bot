@@ -674,7 +674,7 @@ async function processReaction(reaction, user, add, bot) {
       );
       utils.send(
         utils.createEmbed(
-          `Task ${id} has ended.`,
+          `Task ${taskId} has ended.`,
           `Pick another one.`,
           false,
           user.username,
