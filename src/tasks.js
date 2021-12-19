@@ -13,7 +13,6 @@ tasks.json format
   <timestamp as ID>: {
     channelId: <ID>
     messageId: <ID>
-    title: <string>
     description: <string>
     taskmaster: <ID>
     submissions: {
@@ -61,7 +60,7 @@ function writeFile() {
  */
 function help(prefix, message) {
   const helptext =
-    `\`${prefix}newtask [title] ; [description]\` - (DM Only) Create a new task.\n` +
+    `\`${prefix}newtask [description]\` - (DM Only) Create a new task.\n` +
     `\`${prefix}listtasks\` - List available tasks with links to respective messages.` +
     `\`${prefix}submit [id] [submission]\` - (DM Only) Submit to the given task.\n` +
     `\`${prefix}listsubs [id]\` - (DM Only) If you're taskmaster, list submissions for the given task.`;
@@ -78,7 +77,7 @@ function help(prefix, message) {
 }
 
 /**
- * Create a new task: $newtask title ; description
+ * Create a new task: $newtask description
  * @param {string} args Arguments from the command message
  * @param {Discord.Message} message Message that sent the command
  * @param {Discord.Client} bot Bot object
@@ -86,22 +85,13 @@ function help(prefix, message) {
  */
 async function newTask(args, message, bot) {
   try {
-    const taskParts = args.trim().split(";");
-    let title, description;
-    if (taskParts.length == 1) {
-      title = "Untitled";
-      description = taskParts[0];
-    } else if (taskParts.length == 2) {
-      title = taskParts[0].trim();
-      description = taskParts[1].trim();
-    } else {
-      utils.logger.warn(
-        `Bad number of parts (exp. 1 or 2, got ${taskParts.length}) for new task: ${args}`
-      );
+    const description = args.trim();
+    if (!description) {
+      utils.logger.warn(`Empty message for new task`);
       utils.reply(
         utils.createEmbed(
           "Error Creating Task",
-          `Wrong number of parts. Expected 1 or 2, got ${taskParts.length}`,
+          `No task description provided`,
           false,
           null,
           null,
@@ -114,7 +104,6 @@ async function newTask(args, message, bot) {
 
     let task = {
       channelId: TASKS_CHANNEL_ID,
-      title: title,
       description: description,
       taskmaster: message.author.id,
       submissions: {},
@@ -156,8 +145,8 @@ async function newTask(args, message, bot) {
 
     utils.reply(
       utils.createEmbed(
-        `${task.title}`,
-        `Task ID: \`${taskId}\`\n---\n${task.description}`,
+        `Task ${taskId}`,
+        `${task.description}`,
         false,
         message.author.username,
         message.author.avatarURL()
@@ -534,8 +523,8 @@ async function processReaction(reaction, user, add, bot) {
       );
       utils.send(
         utils.createEmbed(
-          `${task.title}`,
-          `Task ID: \`${taskId}\`\n---\n${task.description}`,
+          `Task ${taskId}`,
+          `${task.description}`,
           false,
           user.username,
           user.avatarURL()
@@ -563,8 +552,8 @@ async function processReaction(reaction, user, add, bot) {
         utils.logger.log("debug", `${user.dmChannel}`);
         utils.send(
           utils.createEmbed(
-            `${task.title}`,
-            `Task ID: \`${taskId}\`\n---\n${task.description}`,
+            `Task ${taskId}`,
+            `${task.description}`,
             false,
             taskmaster.username,
             taskmaster.avatarURL()
