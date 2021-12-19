@@ -179,6 +179,9 @@ async function listTasks(message, bot) {
     const user = await bot.users.fetch(task.taskmaster);
     messageText += `* [Task ${id}](${message.url}) from ${user}\n`;
   }
+  if (!messageText) {
+    messageText = "No tasks are currently available.";
+  }
   utils.reply(
     utils.createEmbed(
       "Available Tasks",
