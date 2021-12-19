@@ -499,7 +499,7 @@ async function endTask(args, message, bot) {
   }
 
   // Make sure it isn't already ended
-  if (tasks[args].active) {
+  if (!tasks[args].active) {
     utils.logger.info(
       `User ${message.author.username} tried to end inactive task ${args}`
     );
