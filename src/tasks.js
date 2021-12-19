@@ -590,7 +590,7 @@ async function endTask(args, message, bot) {
  * @param {Discord.Client} bot Discord bot object
  */
 async function onBotStart(bot) {
-  utils.logger.log("debug", `Loading tasks...`);
+  utils.logger.info(`Loading tasks...`);
   tasks = getFile();
 
   // Cache task send messages
