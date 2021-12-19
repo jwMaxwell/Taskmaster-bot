@@ -674,8 +674,6 @@ async function processReaction(reaction, user, add, bot) {
       );
       try {
         const taskmaster = await bot.users.fetch(task.taskmaster);
-        // const dmChannel = await bot.channels.fetch(user.dmChannel);
-        utils.logger.log("debug", `${user.dmChannel}`);
         utils.send(
           utils.createEmbed(
             `Task ${taskId}`,
