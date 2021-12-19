@@ -498,6 +498,25 @@ async function endTask(args, message, bot) {
     return;
   }
 
+  // Make sure it isn't already ended
+  if (tasks[args].active) {
+    utils.logger.info(
+      `User ${message.author.username} tried to end inactive task ${id}`
+    );
+    utils.reply(
+      utils.createEmbed(
+        `Already Ended`,
+        `That task has already ended.`,
+        false,
+        message.author.username,
+        message.author.avatarURL(),
+        utils.COLORS.RED
+      ),
+      message
+    );
+    return;
+  }
+
   // End the task
   tasks[args].active = false;
   writeFile();
@@ -553,6 +572,17 @@ async function endTask(args, message, bot) {
       );
     }
   }
+
+  utils.reply(
+    utils.createEmbed(
+      `Task ${args} Ended Successfully`,
+      `Submissions have been sent to the submissions channel.`,
+      false,
+      message.author.username,
+      message.author.avatarURL()
+    ),
+    message
+  );
 }
 
 /**
@@ -636,6 +666,25 @@ async function processReaction(reaction, user, add, bot) {
     const task = tasks[matchingMessages[0]];
     const taskId = matchingMessages[0];
     utils.logger.log("debug", `Message ${reaction.message.url} is a task!`);
+
+    // Make sure this is active
+    if (!task.active) {
+      utils.logger.info(
+        `User ${message.author.username} tried to request inactive task ${id}`
+      );
+      utils.reply(
+        utils.createEmbed(
+          `Task ${id} has ended.`,
+          `Pick another one.`,
+          false,
+          message.author.username,
+          message.author.avatarURL(),
+          utils.COLORS.RED
+        ),
+        message
+      );
+      return;
+    }
 
     // Make sure this person isn't the taskmaster
     if (user.id == task.taskmaster) {
