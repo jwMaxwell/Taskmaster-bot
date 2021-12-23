@@ -13,6 +13,7 @@ const winston = require("winston");
 const winstonDiscord = require("./CustomDiscordWebhookTransport.js");
 const winstonRotateFile = require("winston-daily-rotate-file");
 const utils = require("./utils.js");
+const tasks = require("./tasks.js");
 
 const PREFIX = "$";
 
@@ -114,7 +115,8 @@ const bot = new Client({
 
 bot.on("ready", async () => {
   // when loaded (ready event)
-  bot.user.setActivity(`${PREFIX}help | ${PREFIX}info`, { type: "PLAYING" });
+  bot.user.setActivity(`${PREFIX}help`, { type: "PLAYING" });
+  tasks.onBotStart(bot);
   utils.logger.log("debug", `${bot.user.username} is ready...`);
 });
 
@@ -124,16 +126,13 @@ bot.on("messageCreate", async (message) => {
     message = await message.fetch();
   }
 
-  if (message.channel.type === "DM" && message.author.id != bot.user.id) {
-    //TODO
-    utils.reply("Hello!", message);
-    return;
-  }
-
   // if it is a command
   if (message.content.charAt(0) === PREFIX) {
-    //TODO
-    utils.reply("Hello!", message);
+    const command = message.content.split(/\s/)[0].toLowerCase().slice(1);
+    const args = message.content
+      .substring(message.content.split(/\s/)[0].length)
+      .slice(1);
+    tasks.processCommand(command, args, bot, message, PREFIX);
     return;
   }
 });
@@ -153,7 +152,15 @@ bot.on("messageReactionAdd", async (reaction, user) => {
     }
   }
 
-  //TODO
+  utils.logger.log(
+    "debug",
+    `${user.username} just reacted to ${reaction.message.url}`
+  );
+
+  if (reaction.message.author.id == bot.user.id && user.id != bot.user.id) {
+    tasks.processReaction(reaction, user, true, bot);
+    return;
+  }
 });
 
 bot.on("messageReactionRemove", async (reaction, user) => {
@@ -171,7 +178,10 @@ bot.on("messageReactionRemove", async (reaction, user) => {
     }
   }
 
-  //TODO
+  utils.logger.log(
+    "debug",
+    `${user.username} just un-reacted to ${reaction.message.url}`
+  );
 });
 
 // brings the bot online

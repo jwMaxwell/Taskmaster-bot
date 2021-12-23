@@ -19,7 +19,7 @@ const HOUR = 60 * MINUTE;
 /**
  * Send a message to a channel of your choice.
  * @param {Discord.MessageEmbed|String} content The content to include in the message.
- * @param {int} channel The channel ID to send this message to.
+ * @param {int | Discord.User} channel The channel ID to send this message to.
  * @param {Discord.Client} bot Instantiated Discord Client.
  * @param {Discord.User[]} [mention=null] An array of users to mention. Will add to the beginning of the content (even for embeds)
  * @throws "Invalid bot" if the bot is not properly provided.
@@ -35,8 +35,13 @@ async function send(content, channel, bot, mention = false) {
   if (!(bot instanceof Discord.Client)) {
     throw "Invalid bot";
   }
-  if (!/\d+/.test(channel)) {
+  let channelObj;
+  if (channel instanceof Discord.User) {
+    channelObj = channel;
+  } else if (!/\d+/.test(channel)) {
     throw "Not a Channel ID";
+  } else {
+    channelObj = await bot.channels.fetch(channel);
   }
 
   let messageData = {};
@@ -54,7 +59,6 @@ async function send(content, channel, bot, mention = false) {
     messageData.content = `${mentionString}${messageData.content ?? ""}`;
   }
 
-  const channelObj = bot.channels.cache.get(channel);
   // prettier-ignore
   this.logger.log(
     "debug",
@@ -107,7 +111,7 @@ async function reply(content, message, mention = false) {
  * @param {boolean} [monotype=false] True if the content should be monospace (```yaml).
  * @param {string} [footer=null] Footer text of the embed.
  * @param {string} [footerImageURL=null] Fully qualified URL to image to include in footer.
- * @param {SpikeKit.COLORS} [color=COLORS.GREEN] Color for the embed. If not defined in enum, embed will be green.
+ * @param {Utils.COLORS} [color=COLORS.GREEN] Color for the embed. If not defined in enum, embed will be green.
  * @returns {Discord.MessageEmbed} Embed to send on via another function.
  */
 function createEmbed(
