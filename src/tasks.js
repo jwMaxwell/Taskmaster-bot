@@ -3,8 +3,8 @@ const fs = require("fs");
 
 const FILENAME = "../data/tasks.json";
 const EMOJI = "📫";
-const TASKS_CHANNEL_ID = "920138517391224922"; // #spam
-const SUBMISSIONS_CHANNEL_ID = "920138517391224922"; // #spam
+const TASKS_CHANNEL_ID = "919742332159549440";
+const SUBMISSIONS_CHANNEL_ID = "919742301931192370";
 let tasks;
 
 /*
